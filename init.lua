@@ -1,24 +1,37 @@
+-- must be loaded before lazy.vim
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
--- lazy.vim package manager
+-- lazy.vim package manager. Run :Lazy for settings
+-- settings are in ~/.config/nvim/lua/config/lazy.lua
 require("config.lazy")
 
-vim.opt.tabstop = 2
-vim.opt.shiftwidth = 2
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.expandtab = true
 vim.opt.number = true
 vim.opt.rnu = true
 vim.opt.hlsearch = false
 vim.opt.hidden = true
 
 -------------------------------------------------------------------------------
+------------------------------------ THEME ------------------------------------
+-------------------------------------------------------------------------------
+vim.g.material_style = "darker"
+vim.cmd 'colorscheme material'
+
+-------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
 -------------------------------------------------------------------------------
+-- see key-notation in :help
 vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
 vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
-vim.api.nvim_set_keymap('n', '<leader>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', { noremap = true, silent = true })
 
-vim.api.nvim_set_keymap('t', '<Esc>', '<C-\\><C-n>', { noremap = true, silent = true })
+-- move a line up or down
+vim.api.nvim_set_keymap('n', 'J', ':m+1<CR>', { noremap = true })
+vim.api.nvim_set_keymap('n', 'K', ':m-2<CR>', { noremap = true })
+
+-- vim.api.nvim_set_keymap('t', '<Esc>', '<C-\\><C-n>', { noremap = true, silent = true })
 -- vim.api.nvim_set_keymap('t', '<Tab>', '<C-\\><C-n>:bnext<CR>', { noremap = true, silent = true })
 -- vim.api.nvim_create_autocmd("BufEnter", {
 --   pattern = "*",
@@ -57,34 +70,29 @@ vim.api.nvim_set_hl(0, "SpellBad", { underline = true, sp = "red" })
 -------------------------------------- .c --------------------------------------
 -------------------------------------------------------------------------------
 -- compile and run a c file with leader+enter
-vim.api.nvim_set_keymap('n', '<leader>c', [[:w<CR>:!gcc % -o %:r<CR>]], { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<leader>r', [[:w<CR>:!gcc % -o %:r && ./%:r<CR>]], { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<leader>c', [[:w<CR>:!gcc % -o %:r<CR>]], { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<leader>r', [[:w<CR>:!gcc % -o %:r && ./%:r<CR>]], { noremap = true, silent = true })
 -- doesn't work but ok.
 -- vim.api.nvim_set_keymap('n', '<leader>t', [[:w<CR>:terminal gcc % -o %:r && ./%:r<CR>]], { noremap = true, silent = true })
 
 -- manually format, idk if this is the best way to do it.
-vim.api.nvim_create_autocmd("BufWritePre", {
-  pattern = "*.c",
-  callback = function()
-    local pos = vim.api.nvim_win_get_cursor(0)
-    vim.cmd("normal! gggqG")
-    vim.api.nvim_win_set_cursor(0, pos)
-    vim.cmd("normal! zz")
-  end,
-  group = vim.api.nvim_create_augroup("format_on_save", { clear = true }),
-})
+-- vim.api.nvim_create_autocmd("BufWritePre", {
+--   pattern = "*.c",
+--   callback = function()
+--     local pos = vim.api.nvim_win_get_cursor(0)
+--     vim.cmd("normal! gggqG")
+--     vim.api.nvim_win_set_cursor(0, pos)
+--     vim.cmd("normal! zz")
+--   end,
+--   group = vim.api.nvim_create_augroup("format_on_save", { clear = true }),
+-- })
 
--- LSP
--- nvim-lspconfig package + clangd installation required for this. Not sure why
--- I didn't have to do any of the setup required in :help lsp. Also, clangd was
--- already installed, I'm not sure where.
+--[[
+LSP
+nvim-lspconfig package + clangd installation required for this. See :help lsp
+Formatting configured in ~/.clang-format. Run `clang-format -dump-config` to
+see settings. This automatically overrides `gq` for formatting.
+--]]
 local lspconfig = require('lspconfig')
 lspconfig.clangd.setup({})
-
--- Formatting manually? the lsp already (i think) sets gq)
---vim.api.nvim_create_autocmd("BufWritePre", {
---	pattern = "*.c",
---	command = "ClangFormat",
---	group = vim.api.nvim_create_augroup("clang_format_on_save", { clear = true }),
---})
-
+vim.api.nvim_set_keymap('n', '<leader>j', '<Cmd>lua vim.lsp.buf.code_action()<CR>', { noremap = true, silent = true })
