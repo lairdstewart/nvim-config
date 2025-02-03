@@ -26,21 +26,10 @@ vim.cmd 'colorscheme material'
 -- see key-notation in :help
 vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
 vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
-
--- move a line up or down
-vim.api.nvim_set_keymap('n', 'J', ':m+1<CR>', { noremap = true })
-vim.api.nvim_set_keymap('n', 'K', ':m-2<CR>', { noremap = true })
-
--- vim.api.nvim_set_keymap('t', '<Esc>', '<C-\\><C-n>', { noremap = true, silent = true })
--- vim.api.nvim_set_keymap('t', '<Tab>', '<C-\\><C-n>:bnext<CR>', { noremap = true, silent = true })
--- vim.api.nvim_create_autocmd("BufEnter", {
---   pattern = "*",
---   callback = function()
---     if vim.bo.buftype == 'terminal' then
---       vim.cmd('startinsert')
---     end
---   end,
--- })
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
+vim.keymap.set("n", "<leader>s", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
+vim.keymap.set("n", "<leader>e", ':Ex<CR>')
 
 -------------------------------------------------------------------------------
 ---------------------------------- .txt/.md -----------------------------------
