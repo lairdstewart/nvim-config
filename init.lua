@@ -31,6 +31,42 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>s", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
 vim.keymap.set("n", "<leader>e", ':Ex<CR>')
 
+local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<leader>ff', builtin.find_files, { desc = 'Telescope find files' })
+vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
+vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' })
+vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
+
+local action_state = require('telescope.actions.state')
+require('telescope').setup{
+  defaults = {
+    mappings = {
+      i = {
+         ["<Tab>"] = function(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            local filepath = selection.path
+            -- vim.notify("selection" .. selection, vim.log.levels.INFO) 
+            vim.notify("\"" .. filepath .. "\"", vim.log.levels.INFO) 
+            vim.fn.jobstart({"open", filepath})
+         -- if filepath and filepath:match("%.(png|pdf)$") then
+         --   vim.fn.jobstart({"open", filepath})
+         -- end
+         end,
+      },
+      n = {
+        ["<Tab>"] = require('telescope.actions').move_selection_next, -- Tab to move to next item in normal mode
+      },
+    },
+  },
+}
+       --  ["<C-y>"] = function(prompt_bufnr)
+       --    local selection = action_state.get_selected_entry()
+       --    local filepath = selection.path
+       --    if filepath and filepath:match("%.(png|pdf)$") then
+       --        -- vim.fn.jobstart({"open", filepath})
+       --    end
+       --  end,
+
 -------------------------------------------------------------------------------
 ---------------------------------- .txt/.md -----------------------------------
 -------------------------------------------------------------------------------
