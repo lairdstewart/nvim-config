@@ -38,34 +38,39 @@ vim.keymap.set('n', '<leader>fb', builtin.buffers, { desc = 'Telescope buffers' 
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
 
 local action_state = require('telescope.actions.state')
+local actions = require('telescope.actions')
 require('telescope').setup{
   defaults = {
     mappings = {
       i = {
-         ["<Tab>"] = function(prompt_bufnr)
+         ["<CR>"] = function(prompt_bufnr)
             local selection = action_state.get_selected_entry()
             local filepath = selection.path
-            -- vim.notify("selection" .. selection, vim.log.levels.INFO) 
-            vim.notify("\"" .. filepath .. "\"", vim.log.levels.INFO) 
-            vim.fn.jobstart({"open", filepath})
-         -- if filepath and filepath:match("%.(png|pdf)$") then
-         --   vim.fn.jobstart({"open", filepath})
-         -- end
-         end,
+
+              if filepath and filepath:match("%.pdf$") then
+                vim.fn.jobstart({"open", filepath})
+                actions.close(prompt_bufnr)
+              else
+                actions.select_default(prompt_bufnr)
+              end
+             end,
       },
       n = {
-        ["<Tab>"] = require('telescope.actions').move_selection_next, -- Tab to move to next item in normal mode
+         ["<CR>"] = function(prompt_bufnr)
+            local selection = action_state.get_selected_entry()
+            local filepath = selection.path
+
+              if filepath and filepath:match("%.pdf$") then
+                vim.fn.jobstart({"open", filepath})
+                actions.close(prompt_bufnr)
+              else
+                actions.select_default(prompt_bufnr)
+              end
+         end,
       },
     },
   },
 }
-       --  ["<C-y>"] = function(prompt_bufnr)
-       --    local selection = action_state.get_selected_entry()
-       --    local filepath = selection.path
-       --    if filepath and filepath:match("%.(png|pdf)$") then
-       --        -- vim.fn.jobstart({"open", filepath})
-       --    end
-       --  end,
 
 -------------------------------------------------------------------------------
 ---------------------------------- .txt/.md -----------------------------------
