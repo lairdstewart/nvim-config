@@ -39,6 +39,20 @@ vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
 vim.keymap.set("n", "<leader>1", ':Ex<CR>')
 
+-- move to/from terminal with ctrl+;
+vim.keymap.set('t', '<C-;>', function()
+  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
+  vim.cmd('b#')
+end, { noremap = true, silent = true })
+vim.keymap.set("n", "<C-;>", function()
+  vim.cmd("redir @a | silent ls | redir END")
+  local output = vim.fn.system("grep term", vim.fn.getreg("a"))
+  local first_line = vim.split(output, "\n")[1]
+  local bufnr = tonumber(vim.fn.trim(vim.fn.matchstr(first_line, [[\v\s*\d+]])))
+  vim.cmd("buffer " .. bufnr)
+  vim.cmd("normal! i")
+end, { noremap = true, silent = true })
+
 local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<leader>s', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
