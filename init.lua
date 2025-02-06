@@ -1,3 +1,10 @@
+-- TODO
+-- let ctrl+w exit the terminal (useful when split) and confirm there is no important functionality that ctrl+w does in the terminal
+-- create a keyboard shortcut for creating a terminal in the split to the right and opening the directory from the buffer on the left. 
+-- ctrl+z to enter/exit terminal
+-- ideal terminal setup: use ctrl+z from anywhere to open the last terminal. If there are multiple display them in a list with a number to choose from. Once inside the terminal ctrl+z again goes back to the previous buffer. 
+-- `:vsplit | term cd ~/path/to/file ; zsh` opens the terminal in a particular file
+
 -- must be loaded before lazy.vim
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
@@ -13,6 +20,7 @@ vim.opt.number = true
 vim.opt.rnu = true
 vim.opt.hlsearch = false
 vim.opt.hidden = true
+vim.opt.splitright = true
 
 -------------------------------------------------------------------------------
 ------------------------------------ THEME ------------------------------------
@@ -67,6 +75,8 @@ require('telescope').setup{
                 actions.select_default(prompt_bufnr)
               end
          end,
+         ["<Del>"] = actions.delete_buffer,
+         ["<BS>"] = actions.delete_buffer,
       },
     },
   },
