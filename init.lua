@@ -87,7 +87,10 @@ function OpenExplorer()
     vim.cmd("Ex")
 end
 
-vim.keymap.set({'t'}, '<leader>2', [[<C-\><C-n>:lua OpenExplorer()<CR>]], { noremap = true, silent = true })
+-- todo specifying a leader keymap in terminal mode bugs things out because it waits after space key presses. which obv. isn't ideal. Need to think of a better way to handle this. Maybe only do it in normal mode? same reason i cant just  2 in editing mode 
+-- also, the biggest problem I have with using <Esc> in 't' is that it messes up git commit messages, but i wonder if there is a way I can just open the file within this current nvim instance.
+-- notice how the words are split when wrapping fix.
+-- vim.keymap.set({'t'}, '<leader>2', [[<C-\><C-n>:lua OpenExplorer()<CR>]], { noremap = true, silent = true })
 
 vim.keymap.set({'t'}, '<Esc>', function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
