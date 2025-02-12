@@ -1,10 +1,3 @@
--- TODO
--- let ctrl+w exit the terminal (useful when split) and confirm there is no important functionality that ctrl+w does in the terminal
--- create a keyboard shortcut for creating a terminal in the split to the right and opening the directory from the buffer on the left. 
--- ctrl+z to enter/exit terminal
--- ideal terminal setup: use ctrl+z from anywhere to open the last terminal. If there are multiple display them in a list with a number to choose from. Once inside the terminal ctrl+z again goes back to the previous buffer. 
--- `:vsplit | term cd ~/path/to/file ; zsh` opens the terminal in a particular file
-
 -- must be loaded before lazy.vim
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
@@ -29,32 +22,65 @@ vim.g.material_style = "darker"
 vim.cmd 'colorscheme material'
 
 -------------------------------------------------------------------------------
+------------------------------------ NETRW ------------------------------------
+-------------------------------------------------------------------------------
+vim.g.netrw_list_hide = [[^\.\.\=/\=$]]
+vim.g.netrw_buffer_on_entry = nil
+vim.api.nvim_create_autocmd('FileType', {
+    pattern = 'netrw',
+    callback = function()
+        if not vim.g.netrw_buffer_on_entry then
+            vim.g.netrw_buffer_on_entry = vim.fn.bufnr('#')
+        end
+
+        vim.keymap.set('n', 'n', '%', {remap = true, buffer = true})
+        vim.keymap.set('n', 'r', 'R', {remap = true, buffer = true})
+        vim.keymap.set('n', 'h', '-', {remap = true, buffer = true})
+        vim.keymap.set('n', 'l', '<CR>', {remap = true, buffer = true})
+        vim.keymap.set('n', '<Esc>', function()
+            if vim.fn.bufexists(vim.g.netrw_buffer_on_entry) == 1 then
+                vim.cmd('buffer ' .. vim.g.netrw_buffer_on_entry)
+            end
+            vim.g.netrw_buffer_on_entry = nil
+        end, {remap = true, buffer = true})
+    end
+})
+
+-------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
 -------------------------------------------------------------------------------
--- see key-notation in :help
 vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
 vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
 vim.keymap.set("n", "<leader>1", ':Ex<CR>')
+vim.keymap.set("n", "<C-u>", '<C-u>zz')
+vim.keymap.set("n", "<C-d>", '<C-d>zz')
+vim.keymap.set("n", "n", 'nzz')
+vim.keymap.set("n", "N", 'Nzz')
 
 -- move to/from terminal with ctrl+;
-vim.keymap.set('t', '<C-;>', function()
+vim.keymap.set('t', '<C-z>', function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
   vim.cmd('b#')
 end, { noremap = true, silent = true })
-vim.keymap.set("n", "<C-;>", function()
+vim.keymap.set("n", "<C-z>", function()
   vim.cmd("redir @a | silent ls | redir END")
   local output = vim.fn.system("grep term", vim.fn.getreg("a"))
   local first_line = vim.split(output, "\n")[1]
   local bufnr = tonumber(vim.fn.trim(vim.fn.matchstr(first_line, [[\v\s*\d+]])))
-  vim.cmd("buffer " .. bufnr)
+  if (bufnr) then
+      vim.cmd("buffer " .. bufnr)
+  else
+      vim.cmd("term")
+  end
   vim.cmd("normal! i")
+
 end, { noremap = true, silent = true })
 
 local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<leader>s', builtin.find_files, { desc = 'Telescope find files' })
+vim.keymap.set('n', '<C-f>', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
 vim.keymap.set('n', '<leader>a', builtin.buffers, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
@@ -150,3 +176,39 @@ see settings. This automatically overrides `gq` for formatting.
 local lspconfig = require('lspconfig')
 lspconfig.clangd.setup({})
 vim.api.nvim_set_keymap('n', '<leader>j', '<Cmd>lua vim.lsp.buf.code_action()<CR>', { noremap = true, silent = true })
+
+-- Configure Pyright for Python
+-- installed pyright via homebrew
+lspconfig.pyright.setup {
+  on_attach = function(client, bufnr)
+    -- Keybindings for LSP features
+    local opts = { noremap = true, silent = true, buffer = bufnr }
+    -- local keymap = vim.api.nvim_set_keymap
+
+    -- LSP key mappings
+    -- keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
+    -- keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+    -- keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+    -- keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
+    -- keymap('n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
+    -- keymap('n', '<leader>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
+
+    -- Format on save
+    -- vim.api.nvim_create_autocmd("BufWritePre", {
+    --   buffer = bufnr,
+    --   callback = function()
+    --     vim.lsp.buf.format({ async = false })
+    --   end,
+    -- })
+  end,
+
+  settings = {
+    python = {
+      analysis = {
+        typeCheckingMode = "basic", -- Change to "strict" for stricter type checking
+      },
+    },
+  },
+}
+
+
