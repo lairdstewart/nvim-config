@@ -24,8 +24,10 @@ vim.cmd 'colorscheme material'
 -------------------------------------------------------------------------------
 ------------------------------------ NETRW ------------------------------------
 -------------------------------------------------------------------------------
+-- todo https://vonheikemen.github.io/devlog/tools/using-netrw-vim-builtin-file-explorer/
 vim.g.netrw_list_hide = [[^\.\.\=/\=$]]
 vim.g.netrw_buffer_on_entry = nil
+vim.g.netrw_banner = 0
 vim.api.nvim_create_autocmd('FileType', {
     pattern = 'netrw',
     callback = function()
@@ -54,18 +56,28 @@ vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
-vim.keymap.set("n", "<leader>1", ':Ex<CR>')
+vim.keymap.set("n", "<leader>2", ':Ex<CR>')
 vim.keymap.set("n", "<C-u>", '<C-u>zz')
 vim.keymap.set("n", "<C-d>", '<C-d>zz')
 vim.keymap.set("n", "n", 'nzz')
 vim.keymap.set("n", "N", 'Nzz')
+vim.keymap.set("n", "<leader>y", "\"+y")
+vim.keymap.set("v", "<leader>y", "\"+y")
+vim.keymap.set("n", "<leader>Y", "\"+Y")
+vim.keymap.set("n", "<leader>p", "\"+p")
+vim.keymap.set("n", "<leader>d", "\"_d")
+vim.keymap.set("v", "<leader>d", "\"_d")
 
--- move to/from terminal with ctrl+;
-vim.keymap.set('t', '<C-z>', function()
+
+-------------------------------------------------------------------------------
+------------------------------------ TERM -------------------------------------
+-------------------------------------------------------------------------------
+vim.keymap.set({'t', 'n'}, '<Esc>', function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
   vim.cmd('b#')
 end, { noremap = true, silent = true })
-vim.keymap.set("n", "<C-z>", function()
+
+vim.keymap.set("n", "<leader>1", function()
   vim.cmd("redir @a | silent ls | redir END")
   local output = vim.fn.system("grep term", vim.fn.getreg("a"))
   local first_line = vim.split(output, "\n")[1]
@@ -75,10 +87,12 @@ vim.keymap.set("n", "<C-z>", function()
   else
       vim.cmd("term")
   end
-  vim.cmd("normal! i")
-
+  -- vim.cmd("normal! i")
 end, { noremap = true, silent = true })
 
+-------------------------------------------------------------------------------
+--------------------------------- TELESCOPE -----------------------------------
+-------------------------------------------------------------------------------
 local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<C-f>', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
