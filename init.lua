@@ -43,6 +43,7 @@ vim.api.nvim_create_autocmd('FileType', {
             if vim.fn.bufexists(vim.g.netrw_buffer_on_entry) == 1 then
                 vim.cmd('buffer ' .. vim.g.netrw_buffer_on_entry)
             end
+            -- todo need to do this if selecting a file as well ... 
             vim.g.netrw_buffer_on_entry = nil
         end, {remap = true, buffer = true})
     end
@@ -72,21 +73,38 @@ vim.keymap.set("v", "<leader>d", "\"_d")
 -------------------------------------------------------------------------------
 ------------------------------------ TERM -------------------------------------
 -------------------------------------------------------------------------------
-vim.keymap.set({'t', 'n'}, '<Esc>', function()
+-- TODO:
+-- 1. <Esc> doesn't return from normal mode in the temrinal. need to figure
+-- out a way to specify that mode in particular.
+-- 2. I can't open netrw from normal mode in the terminal
+-- 3. If I open netrw from 't', then press <Esc> I'm not returned to my OG buffer
+-- 4. if I open a file from netrw the global buffer variable isn't set to nil correctly
+function OpenExplorer()
+    vim.cmd("enew")
+    vim.bo.buftype = "nofile"
+    vim.bo.bufhidden = "wipe"
+    vim.bo.buflisted = false
+    vim.cmd("Ex")
+end
+
+vim.keymap.set({'t'}, '<leader>2', [[<C-\><C-n>:lua OpenExplorer()<CR>]], { noremap = true, silent = true })
+
+vim.keymap.set({'t'}, '<Esc>', function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
   vim.cmd('b#')
+  vim.g.netrw_buffer_on_entry = nil
 end, { noremap = true, silent = true })
 
 vim.keymap.set("n", "<leader>1", function()
-  vim.cmd("redir @a | silent ls | redir END")
-  local output = vim.fn.system("grep term", vim.fn.getreg("a"))
-  local first_line = vim.split(output, "\n")[1]
-  local bufnr = tonumber(vim.fn.trim(vim.fn.matchstr(first_line, [[\v\s*\d+]])))
-  if (bufnr) then
-      vim.cmd("buffer " .. bufnr)
-  else
-      vim.cmd("term")
-  end
+    vim.cmd("redir @a | silent ls | redir END")
+    local output = vim.fn.system("grep term", vim.fn.getreg("a"))
+    local first_line = vim.split(output, "\n")[1]
+    local bufnr = tonumber(vim.fn.trim(vim.fn.matchstr(first_line, [[\v\s*\d+]])))
+    if (bufnr) then
+        vim.cmd("buffer " .. bufnr)
+    else
+        vim.cmd("term")
+    end
   -- vim.cmd("normal! i")
 end, { noremap = true, silent = true })
 
