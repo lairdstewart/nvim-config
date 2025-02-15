@@ -6,6 +6,27 @@ vim.g.maplocalleader = ' '
 -- settings are in ~/.config/nvim/lua/config/lazy.lua
 require("config.lazy")
 
+-------------------------------------------------------------------------------
+------------------------------------- OIL -------------------------------------
+-------------------------------------------------------------------------------
+require("oil").setup({
+    default_file_explorer = true,
+    delete_to_trash = true,
+    skip_confirm_for_simple_edits = true,
+    view_options = {
+        -- show_hidden = true
+    }, 
+    keymaps = {
+        ["<ESC>"] = { "actions.close", mode = "n" },
+        ["<M-j>"] = { "actions.close", mode = "n" },
+    }
+})
+vim.keymap.set({'n', 'i', 't'}, '<M-j>', ":Oil<CR>")
+vim.keymap.set('n', '-', ":Oil<CR>")
+
+-------------------------------------------------------------------------------
+------------------------------------ MISC -------------------------------------
+-------------------------------------------------------------------------------
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
@@ -39,6 +60,13 @@ vim.api.nvim_create_autocmd('FileType', {
         vim.keymap.set('n', 'r', 'R', {remap = true, buffer = true})
         vim.keymap.set('n', 'h', '-', {remap = true, buffer = true})
         vim.keymap.set('n', 'l', '<CR>', {remap = true, buffer = true})
+        vim.keymap.set('n', '<M-j>', function()
+            if vim.fn.bufexists(vim.g.netrw_buffer_on_entry) == 1 then
+                vim.cmd('buffer ' .. vim.g.netrw_buffer_on_entry)
+            end
+            -- todo need to do this if selecting a file as well ... 
+            vim.g.netrw_buffer_on_entry = nil
+        end, {remap = true, buffer = true})
         vim.keymap.set('n', '<Esc>', function()
             if vim.fn.bufexists(vim.g.netrw_buffer_on_entry) == 1 then
                 vim.cmd('buffer ' .. vim.g.netrw_buffer_on_entry)
@@ -52,12 +80,12 @@ vim.api.nvim_create_autocmd('FileType', {
 -------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
 -------------------------------------------------------------------------------
-vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
-vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
+--vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
+--vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
-vim.keymap.set("n", "<leader>2", ':Ex<CR>')
+-- vim.keymap.set("n", "<M-j>", ':Ex<CR>')
 vim.keymap.set("n", "<C-u>", '<C-u>zz')
 vim.keymap.set("n", "<C-d>", '<C-d>zz')
 vim.keymap.set("n", "n", 'nzz')
@@ -69,13 +97,13 @@ vim.keymap.set("n", "<leader>p", "\"+p")
 vim.keymap.set("n", "<leader>d", "\"_d")
 vim.keymap.set("v", "<leader>d", "\"_d")
 
-
 -------------------------------------------------------------------------------
 ------------------------------------ TERM -------------------------------------
 -------------------------------------------------------------------------------
 -- TODO:
--- 1. <Esc> doesn't return from normal mode in the temrinal. need to figure
--- out a way to specify that mode in particular.
+-- 1. <M-;> doesn't return from normal mode in the temrinal. need to figure
+-- out a way to specify that mode in particular. I can't specify 
+-- d
 -- 2. I can't open netrw from normal mode in the terminal
 -- 3. If I open netrw from 't', then press <Esc> I'm not returned to my OG buffer
 -- 4. if I open a file from netrw the global buffer variable isn't set to nil correctly
@@ -87,18 +115,17 @@ function OpenExplorer()
     vim.cmd("Ex")
 end
 
--- todo specifying a leader keymap in terminal mode bugs things out because it waits after space key presses. which obv. isn't ideal. Need to think of a better way to handle this. Maybe only do it in normal mode? same reason i cant just  2 in editing mode 
--- also, the biggest problem I have with using <Esc> in 't' is that it messes up git commit messages, but i wonder if there is a way I can just open the file within this current nvim instance.
--- notice how the words are split when wrapping fix.
--- vim.keymap.set({'t'}, '<leader>2', [[<C-\><C-n>:lua OpenExplorer()<CR>]], { noremap = true, silent = true })
+-- todo: going from terminal to explorer and back and forth doesn't store the last "real" buffer correctly
+-- vim.keymap.set({'t'}, '<M-j>', [[<C-\><C-n>:lua OpenExplorer()<CR>]], { noremap = true, silent = true })
 
-vim.keymap.set({'t'}, '<Esc>', function()
+vim.keymap.set({'t'}, '<C-o>', function()
   vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
   vim.cmd('b#')
   vim.g.netrw_buffer_on_entry = nil
 end, { noremap = true, silent = true })
 
-vim.keymap.set("n", "<leader>1", function()
+-- vim.keymap.set("n", "<M-;>", function() -- windows
+vim.keymap.set({'n', 'i'}, "<C-o>", function() -- mac from iterm command+;
     vim.cmd("redir @a | silent ls | redir END")
     local output = vim.fn.system("grep term", vim.fn.getreg("a"))
     local first_line = vim.split(output, "\n")[1]
@@ -108,16 +135,16 @@ vim.keymap.set("n", "<leader>1", function()
     else
         vim.cmd("term")
     end
-  -- vim.cmd("normal! i")
+    vim.cmd("normal! i")
 end, { noremap = true, silent = true })
 
 -------------------------------------------------------------------------------
 --------------------------------- TELESCOPE -----------------------------------
 -------------------------------------------------------------------------------
 local builtin = require('telescope.builtin')
-vim.keymap.set('n', '<C-f>', builtin.find_files, { desc = 'Telescope find files' })
+vim.keymap.set({'n', 'i', 't'}, '<M-f>', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set('n', '<leader>a', builtin.buffers, { desc = 'Telescope buffers' })
+vim.keymap.set({'n', 'i', 't'}, '<M-a>', builtin.buffers, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
 
 local action_state = require('telescope.actions.state')
