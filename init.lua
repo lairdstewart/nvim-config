@@ -21,7 +21,9 @@ require("oil").setup({
         ["<M-j>"] = { "actions.close", mode = "n" },
     }
 })
-vim.keymap.set({'n', 'i', 't'}, '<M-j>', ":Oil<CR>")
+vim.keymap.set({'n', 'i'}, '<M-j>', ":Oil<CR>")
+vim.keymap.set('t', '<M-j>', '<C-\\><C-n>:Oil<CR>')
+-- todo: terminal --> oil --> <M-j> returns to terminal. It should go back to the og buffer
 vim.keymap.set('n', '-', ":Oil<CR>")
 
 -------------------------------------------------------------------------------
@@ -85,7 +87,6 @@ vim.api.nvim_create_autocmd('FileType', {
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
--- vim.keymap.set("n", "<M-j>", ':Ex<CR>')
 vim.keymap.set("n", "<C-u>", '<C-u>zz')
 vim.keymap.set("n", "<C-d>", '<C-d>zz')
 vim.keymap.set("n", "n", 'nzz')
