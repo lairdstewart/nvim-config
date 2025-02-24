@@ -14,7 +14,7 @@ require("oil").setup({
     delete_to_trash = true,
     skip_confirm_for_simple_edits = true,
     view_options = {
-        -- show_hidden = true
+        show_hidden = true
     }, 
     keymaps = {
         ["<ESC>"] = { "actions.close", mode = "n" },
@@ -25,6 +25,7 @@ vim.keymap.set({'n', 'i'}, '<M-j>', ":Oil<CR>")
 vim.keymap.set('t', '<M-j>', '<C-\\><C-n>:Oil<CR>')
 -- todo: terminal --> oil --> <M-j> returns to terminal. It should go back to the og buffer
 vim.keymap.set('n', '-', ":Oil<CR>")
+vim.keymap.set('n', '<M-j>', '<C-\\><C-n>:Oil .<CR>')
 
 -------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
@@ -37,6 +38,9 @@ vim.opt.rnu = true
 vim.opt.hlsearch = false
 vim.opt.hidden = true
 vim.opt.splitright = true
+vim.opt.splitbelow = true
+vim.opt.cursorline = true
+vim.opt.scrolloff = 10
 
 -------------------------------------------------------------------------------
 ------------------------------------ THEME ------------------------------------
@@ -95,6 +99,7 @@ vim.keymap.set("n", "<leader>y", "\"+y")
 vim.keymap.set("v", "<leader>y", "\"+y")
 vim.keymap.set("n", "<leader>Y", "\"+Y")
 vim.keymap.set("n", "<leader>p", "\"+p")
+vim.keymap.set("v", "<leader>p", "\"+p")
 vim.keymap.set("n", "<leader>d", "\"_d")
 vim.keymap.set("v", "<leader>d", "\"_d")
 
@@ -145,13 +150,19 @@ end, { noremap = true, silent = true })
 local builtin = require('telescope.builtin')
 vim.keymap.set({'n', 'i', 't'}, '<M-f>', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set({'n', 'i', 't'}, '<M-a>', builtin.buffers, { desc = 'Telescope buffers' })
+vim.keymap.set({'n', 'i', 't'}, '<M-a>', builtin.oldfiles, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
 
 local action_state = require('telescope.actions.state')
 local actions = require('telescope.actions')
 require('telescope').setup{
+  pickers = {
+    buffers = {
+      ignore_current_buffer = true,
+    },
+  },
   defaults = {
+      -- todo don't show current buffer
     mappings = {
       i = {
          ["<CR>"] = function(prompt_bufnr)
@@ -188,26 +199,26 @@ require('telescope').setup{
 -------------------------------------------------------------------------------
 ---------------------------------- .txt/.md -----------------------------------
 -------------------------------------------------------------------------------
--- Create an autocmd group to organize your autocmds
--- clear ensures these arent duplicated? if `source` multiple times
-local text_file_group = vim.api.nvim_create_augroup("MarkdownAndTxtSettings", { clear = true })
-
--- Add autocmds for Markdown and plain text files
-vim.api.nvim_create_autocmd("FileType", {
-  group = text_file_group,
-  pattern = { "markdown", "text" },
+vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
+  pattern = { '*.txt', '*.md' },
   callback = function()
     vim.opt_local.wrap = true
-    vim.opt_local.linebreak = true
-    vim.opt_local.textwidth = 80
-	-- todo figure out how to make this format on save
-    vim.opt_local.formatoptions = "t"
+    vim.opt_local.lbr = true
     vim.opt_local.spell = true
+    if vim.fn.winnr '$' == 1 then
+      vim.cmd 'vsplit void.txt'
+      vim.cmd 'wincmd h'
+      vim.cmd 'vertical resize 83'
+    end
   end,
 })
 
--- not sure if this works, ideally underline mispelling in red.
-vim.api.nvim_set_hl(0, "SpellBad", { underline = true, sp = "red" })
+vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
+  pattern = { '*.txt', '*md' },
+  callback = function()
+    vim.cmd 'wincmd o'
+  end,
+})
 
 -------------------------------------------------------------------------------
 -------------------------------------- .c --------------------------------------
@@ -249,8 +260,8 @@ lspconfig.pyright.setup {
     -- local keymap = vim.api.nvim_set_keymap
 
     -- LSP key mappings
-    -- keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-    -- keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+    keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
+    keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
     -- keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
     -- keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
     -- keymap('n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
