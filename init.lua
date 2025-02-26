@@ -1,3 +1,8 @@
+-- mapped <C-o> to <M-;> in iTerm2
+
+-- todo: lose my scrolloff and cursorline settings after return from term
+-- todo: C-o is go back, can't use that for reamp ; 
+-- todo: make documentation full screen
 -- must be loaded before lazy.vim
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
@@ -5,6 +10,9 @@ vim.g.maplocalleader = ' '
 -- lazy.vim package manager. Run :Lazy for settings
 -- settings are in ~/.config/nvim/lua/config/lazy.lua
 require("config.lazy")
+
+-- for returning to the latest buffer from oil/terminal
+vim.g.current_normal_buffer = nil
 
 -------------------------------------------------------------------------------
 ------------------------------------- OIL -------------------------------------
@@ -49,41 +57,6 @@ vim.g.material_style = "darker"
 vim.cmd 'colorscheme material'
 
 -------------------------------------------------------------------------------
------------------------------------- NETRW ------------------------------------
--------------------------------------------------------------------------------
--- todo https://vonheikemen.github.io/devlog/tools/using-netrw-vim-builtin-file-explorer/
-vim.g.netrw_list_hide = [[^\.\.\=/\=$]]
-vim.g.netrw_buffer_on_entry = nil
-vim.g.netrw_banner = 0
-vim.api.nvim_create_autocmd('FileType', {
-    pattern = 'netrw',
-    callback = function()
-        if not vim.g.netrw_buffer_on_entry then
-            vim.g.netrw_buffer_on_entry = vim.fn.bufnr('#')
-        end
-
-        vim.keymap.set('n', 'n', '%', {remap = true, buffer = true})
-        vim.keymap.set('n', 'r', 'R', {remap = true, buffer = true})
-        vim.keymap.set('n', 'h', '-', {remap = true, buffer = true})
-        vim.keymap.set('n', 'l', '<CR>', {remap = true, buffer = true})
-        vim.keymap.set('n', '<M-j>', function()
-            if vim.fn.bufexists(vim.g.netrw_buffer_on_entry) == 1 then
-                vim.cmd('buffer ' .. vim.g.netrw_buffer_on_entry)
-            end
-            -- todo need to do this if selecting a file as well ... 
-            vim.g.netrw_buffer_on_entry = nil
-        end, {remap = true, buffer = true})
-        vim.keymap.set('n', '<Esc>', function()
-            if vim.fn.bufexists(vim.g.netrw_buffer_on_entry) == 1 then
-                vim.cmd('buffer ' .. vim.g.netrw_buffer_on_entry)
-            end
-            -- todo need to do this if selecting a file as well ... 
-            vim.g.netrw_buffer_on_entry = nil
-        end, {remap = true, buffer = true})
-    end
-})
-
--------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
 -------------------------------------------------------------------------------
 --vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
@@ -106,32 +79,25 @@ vim.keymap.set("v", "<leader>d", "\"_d")
 -------------------------------------------------------------------------------
 ------------------------------------ TERM -------------------------------------
 -------------------------------------------------------------------------------
--- TODO:
--- 1. <M-;> doesn't return from normal mode in the temrinal. need to figure
--- out a way to specify that mode in particular. I can't specify 
--- d
--- 2. I can't open netrw from normal mode in the terminal
--- 3. If I open netrw from 't', then press <Esc> I'm not returned to my OG buffer
--- 4. if I open a file from netrw the global buffer variable isn't set to nil correctly
-function OpenExplorer()
-    vim.cmd("enew")
-    vim.bo.buftype = "nofile"
-    vim.bo.bufhidden = "wipe"
-    vim.bo.buflisted = false
-    vim.cmd("Ex")
-end
+vim.api.nvim_create_autocmd('TermOpen', {
+  desc = 'Set terminal-normal mode specific commands',
+  group = vim.api.nvim_create_augroup('term-normal-commands', { clear = true }),
+  callback = function()
+    vim.keymap.set("n", "<C-o>", function()
+      vim.cmd('b#')
+      vim.g.netrw_buffer_on_entry = nil
+    end, { silent = true, buffer = 0 })
+  end,
+})
 
--- todo: going from terminal to explorer and back and forth doesn't store the last "real" buffer correctly
--- vim.keymap.set({'t'}, '<M-j>', [[<C-\><C-n>:lua OpenExplorer()<CR>]], { noremap = true, silent = true })
-
+-- todo culprit on the second time! what?
 vim.keymap.set({'t'}, '<C-o>', function()
-  vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<C-\\><C-n>', true, false, true), 'n', false)
   vim.cmd('b#')
   vim.g.netrw_buffer_on_entry = nil
 end, { noremap = true, silent = true })
 
 -- vim.keymap.set("n", "<M-;>", function() -- windows
-vim.keymap.set({'n', 'i'}, "<C-o>", function() -- mac from iterm command+;
+vim.keymap.set({'n', 'i'}, "<C-o>", function()
     vim.cmd("redir @a | silent ls | redir END")
     local output = vim.fn.system("grep term", vim.fn.getreg("a"))
     local first_line = vim.split(output, "\n")[1]
@@ -162,7 +128,6 @@ require('telescope').setup{
     },
   },
   defaults = {
-      -- todo don't show current buffer
     mappings = {
       i = {
          ["<CR>"] = function(prompt_bufnr)
@@ -199,26 +164,28 @@ require('telescope').setup{
 -------------------------------------------------------------------------------
 ---------------------------------- .txt/.md -----------------------------------
 -------------------------------------------------------------------------------
-vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
-  pattern = { '*.txt', '*.md' },
-  callback = function()
-    vim.opt_local.wrap = true
-    vim.opt_local.lbr = true
-    vim.opt_local.spell = true
-    if vim.fn.winnr '$' == 1 then
-      vim.cmd 'vsplit void.txt'
-      vim.cmd 'wincmd h'
-      vim.cmd 'vertical resize 83'
-    end
-  end,
-})
 
-vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
-  pattern = { '*.txt', '*md' },
-  callback = function()
-    vim.cmd 'wincmd o'
-  end,
-})
+-- todo: removed since it messes up documentation presentation
+-- vim.api.nvim_create_autocmd({ 'BufWinEnter' }, {
+--   pattern = { '*.txt', '*.md' },
+--   callback = function()
+--     vim.opt_local.wrap = true
+--     vim.opt_local.lbr = true
+--     vim.opt_local.spell = true
+--     if vim.fn.winnr '$' == 1 then
+--       vim.cmd 'vsplit void.txt'
+--       vim.cmd 'wincmd h'
+--       vim.cmd 'vertical resize 83'
+--     end
+--   end,
+-- })
+
+-- vim.api.nvim_create_autocmd({ 'BufWinLeave' }, {
+--   pattern = { '*.txt', '*md' },
+--   callback = function()
+--     vim.cmd 'wincmd o'
+--   end,
+-- })
 
 -------------------------------------------------------------------------------
 -------------------------------------- .c --------------------------------------
