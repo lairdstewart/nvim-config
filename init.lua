@@ -1,5 +1,6 @@
 -- mapped <C-o> to <M-;> in iTerm2
 
+-- todo: oil can't delete hidden files?
 -- todo: lose my scrolloff and cursorline settings after return from term
 -- todo: C-o is go back, can't use that for reamp ; 
 -- todo: make documentation full screen
@@ -12,7 +13,19 @@ vim.g.maplocalleader = ' '
 require("config.lazy")
 
 -- for returning to the latest buffer from oil/terminal
-vim.g.current_normal_buffer = nil
+vim.g.last_normal_buffer = nil
+
+-------------------------------------------------------------------------------
+------------------------------------ HELP -------------------------------------
+-------------------------------------------------------------------------------
+vim.api.nvim_create_autocmd("BufEnter", {
+  desc = "Don't open help buffer in split",
+  callback = function()
+    if vim.bo.buftype == "help" then
+      vim.cmd.wincmd("o")
+    end
+  end,
+})
 
 -------------------------------------------------------------------------------
 ------------------------------------- OIL -------------------------------------
@@ -29,11 +42,9 @@ require("oil").setup({
         ["<M-j>"] = { "actions.close", mode = "n" },
     }
 })
-vim.keymap.set({'n', 'i'}, '<M-j>', ":Oil<CR>")
-vim.keymap.set('t', '<M-j>', '<C-\\><C-n>:Oil<CR>')
--- todo: terminal --> oil --> <M-j> returns to terminal. It should go back to the og buffer
+
+vim.keymap.set({'n', 'i', 't'}, '<M-j>', '<C-\\><C-n>:Oil .<CR>')
 vim.keymap.set('n', '-', ":Oil<CR>")
-vim.keymap.set('n', '<M-j>', '<C-\\><C-n>:Oil .<CR>')
 
 -------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
@@ -83,18 +94,14 @@ vim.api.nvim_create_autocmd('TermOpen', {
   desc = 'Set terminal-normal mode specific commands',
   group = vim.api.nvim_create_augroup('term-normal-commands', { clear = true }),
   callback = function()
-    vim.keymap.set("n", "<C-o>", function()
+    vim.keymap.set({"n"}, "<C-o>", function()
       vim.cmd('b#')
       vim.g.netrw_buffer_on_entry = nil
-    end, { silent = true, buffer = 0 })
+      end, { silent = true, buffer = 0 })
   end,
 })
 
--- todo culprit on the second time! what?
-vim.keymap.set({'t'}, '<C-o>', function()
-  vim.cmd('b#')
-  vim.g.netrw_buffer_on_entry = nil
-end, { noremap = true, silent = true })
+vim.keymap.set('t', '<C-o>', '<C-\\><C-n>:b#<CR>')
 
 -- vim.keymap.set("n", "<M-;>", function() -- windows
 vim.keymap.set({'n', 'i'}, "<C-o>", function()
@@ -116,7 +123,7 @@ end, { noremap = true, silent = true })
 local builtin = require('telescope.builtin')
 vim.keymap.set({'n', 'i', 't'}, '<M-f>', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set({'n', 'i', 't'}, '<M-a>', builtin.oldfiles, { desc = 'Telescope buffers' })
+vim.keymap.set({'n', 'i', 't'}, '<M-a>', builtin.buffers, { desc = 'Telescope buffers' })
 vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
 
 local action_state = require('telescope.actions.state')
