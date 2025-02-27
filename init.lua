@@ -1,7 +1,6 @@
--- mapped <C-o> to <M-;> in iTerm2
-
+-- mapped <C-n> to <M-;> in iTerm2
 -- todo: oil can't delete hidden files?
--- todo: C-o is go back, can't use that for reamp ; 
+-- todo: store last_normal_buffer
 
 -- must be loaded before lazy.vim
 vim.g.mapleader = ' '
@@ -94,17 +93,17 @@ vim.api.nvim_create_autocmd('TermOpen', {
   desc = 'Set terminal-normal mode specific commands',
   group = vim.api.nvim_create_augroup('term-normal-commands', { clear = true }),
   callback = function()
-    vim.keymap.set({"n"}, "<C-o>", function()
+    vim.keymap.set({"n"}, "<C-n>", function()
       vim.cmd('b#')
       vim.g.netrw_buffer_on_entry = nil
       end, { silent = true, buffer = 0 })
   end,
 })
 
-vim.keymap.set('t', '<C-o>', '<C-\\><C-n>:b#<CR>')
+vim.keymap.set('t', '<C-n>', '<C-\\><C-n>:b#<CR>')
 
 -- vim.keymap.set("n", "<M-;>", function() -- windows
-vim.keymap.set({'n', 'i'}, "<C-o>", function()
+vim.keymap.set({'n', 'i'}, "<C-n>", function()
     vim.cmd("redir @a | silent ls | redir END")
     local output = vim.fn.system("grep term", vim.fn.getreg("a"))
     local first_line = vim.split(output, "\n")[1]
