@@ -1,9 +1,8 @@
 -- mapped <C-o> to <M-;> in iTerm2
 
 -- todo: oil can't delete hidden files?
--- todo: lose my scrolloff and cursorline settings after return from term
 -- todo: C-o is go back, can't use that for reamp ; 
--- todo: make documentation full screen
+
 -- must be loaded before lazy.vim
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
@@ -19,10 +18,11 @@ vim.g.last_normal_buffer = nil
 ------------------------------------ HELP -------------------------------------
 -------------------------------------------------------------------------------
 vim.api.nvim_create_autocmd("BufEnter", {
-  desc = "Don't open help buffer in split",
+  desc = "Don't open help buffer in split, exit with Esc",
   callback = function()
     if vim.bo.buftype == "help" then
       vim.cmd.wincmd("o")
+      vim.keymap.set({"n"}, "<Esc>", function() vim.cmd('b#') end, { buffer = 0 })
     end
   end,
 })
