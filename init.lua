@@ -1,17 +1,30 @@
--- mapped <C-n> to <M-;> in iTerm2
+-- todo: don't close help buffer when leaving
+-- todo: oil --> term is broken
+-- todo: make help and oil full screen and not disrupt splits when you return
+-- todo: when opening terminal from anywhere go into insert mode automatically
 -- todo: oil can't delete hidden files?
 -- todo: store last_normal_buffer
+-- todo: run python file on command
+
+-- mapped <C-n> to <M-;> in iTerm2
 
 -- must be loaded before lazy.vim
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+vim.g.mapleader = " "
+vim.g.maplocalleader = " "
 
 -- lazy.vim package manager. Run :Lazy for settings
 -- settings are in ~/.config/nvim/lua/config/lazy.lua
 require("config.lazy")
 
 -- for returning to the latest buffer from oil/terminal
-vim.g.last_normal_buffer = nil
+vim.g.last_normal_buffer_num = 0
+
+local onBufLeave = function()
+  -- if not Oil, help, or term, save buffer
+  if vim.bo.buftype ~= "help" and vim.bo.buftype ~= "term" then
+    print("save buffer num")
+  end
+end
 
 -------------------------------------------------------------------------------
 ------------------------------------ HELP -------------------------------------
@@ -21,7 +34,9 @@ vim.api.nvim_create_autocmd("BufEnter", {
   callback = function()
     if vim.bo.buftype == "help" then
       vim.cmd.wincmd("o")
-      vim.keymap.set({"n"}, "<Esc>", function() vim.cmd('b#') end, { buffer = 0 })
+      vim.keymap.set({ "n" }, "<Esc>", function()
+        vim.cmd("b#")
+      end, { buffer = 0 })
     end
   end,
 })
@@ -30,20 +45,20 @@ vim.api.nvim_create_autocmd("BufEnter", {
 ------------------------------------- OIL -------------------------------------
 -------------------------------------------------------------------------------
 require("oil").setup({
-    default_file_explorer = true,
-    delete_to_trash = true,
-    skip_confirm_for_simple_edits = true,
-    view_options = {
-        show_hidden = true
-    }, 
-    keymaps = {
-        ["<ESC>"] = { "actions.close", mode = "n" },
-        ["<M-j>"] = { "actions.close", mode = "n" },
-    }
+  default_file_explorer = true,
+  delete_to_trash = true,
+  skip_confirm_for_simple_edits = true,
+  view_options = {
+    show_hidden = true,
+  },
+  keymaps = {
+    ["<ESC>"] = { "actions.close", mode = "n" },
+    ["<M-j>"] = { "actions.close", mode = "n" },
+  },
 })
 
-vim.keymap.set({'n', 'i', 't'}, '<M-j>', '<C-\\><C-n>:Oil .<CR>')
-vim.keymap.set('n', '-', ":Oil<CR>")
+vim.keymap.set({ "n", "i", "t" }, "<M-j>", "<C-\\><C-n>:Oil .<CR>")
+vim.keymap.set("n", "-", ":Oil<CR>")
 
 -------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
@@ -64,7 +79,7 @@ vim.opt.scrolloff = 10
 ------------------------------------ THEME ------------------------------------
 -------------------------------------------------------------------------------
 vim.g.material_style = "darker"
-vim.cmd 'colorscheme material'
+vim.cmd("colorscheme material")
 
 -------------------------------------------------------------------------------
 ------------------------------------ MISC -------------------------------------
@@ -74,98 +89,105 @@ vim.cmd 'colorscheme material'
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
-vim.keymap.set("n", "<C-u>", '<C-u>zz')
-vim.keymap.set("n", "<C-d>", '<C-d>zz')
-vim.keymap.set("n", "n", 'nzz')
-vim.keymap.set("n", "N", 'Nzz')
-vim.keymap.set("n", "<leader>y", "\"+y")
-vim.keymap.set("v", "<leader>y", "\"+y")
-vim.keymap.set("n", "<leader>Y", "\"+Y")
-vim.keymap.set("n", "<leader>p", "\"+p")
-vim.keymap.set("v", "<leader>p", "\"+p")
-vim.keymap.set("n", "<leader>d", "\"_d")
-vim.keymap.set("v", "<leader>d", "\"_d")
+vim.keymap.set("n", "<C-u>", "<C-u>zz")
+vim.keymap.set("n", "<C-d>", "<C-d>zz")
+vim.keymap.set("n", "n", "nzz")
+vim.keymap.set("n", "N", "Nzz")
+vim.keymap.set("n", "<leader>y", '"+y')
+vim.keymap.set("v", "<leader>y", '"+y')
+vim.keymap.set("n", "<leader>Y", '"+Y')
+vim.keymap.set("n", "<leader>p", '"+p')
+vim.keymap.set("v", "<leader>p", '"+p')
+vim.keymap.set("n", "<leader>d", '"_d')
+vim.keymap.set("v", "<leader>d", '"_d')
 
 -------------------------------------------------------------------------------
 ------------------------------------ TERM -------------------------------------
 -------------------------------------------------------------------------------
-vim.api.nvim_create_autocmd('TermOpen', {
-  desc = 'Set terminal-normal mode specific commands',
-  group = vim.api.nvim_create_augroup('term-normal-commands', { clear = true }),
+vim.api.nvim_create_autocmd("TermOpen", {
+  desc = "Set terminal-normal mode specific commands",
+  group = vim.api.nvim_create_augroup("term-normal-commands", { clear = true }),
   callback = function()
-    vim.keymap.set({"n"}, "<C-n>", function()
-      vim.cmd('b#')
+    vim.keymap.set({ "n" }, "<C-n>", function()
+      vim.cmd("b#")
       vim.g.netrw_buffer_on_entry = nil
-      end, { silent = true, buffer = 0 })
+    end, { silent = true, buffer = 0 })
   end,
 })
 
-vim.keymap.set('t', '<C-n>', '<C-\\><C-n>:b#<CR>')
+-- iterm: command+; --> C-p
+vim.keymap.set("t", "<C-p>", "<C-\\><C-n>:b#<CR>")
+vim.keymap.set("t", "<C-w>", "<C-\\><C-n><C-w>")
 
 -- vim.keymap.set("n", "<M-;>", function() -- windows
-vim.keymap.set({'n', 'i'}, "<C-n>", function()
-    vim.cmd("redir @a | silent ls | redir END")
-    local output = vim.fn.system("grep term", vim.fn.getreg("a"))
-    local first_line = vim.split(output, "\n")[1]
-    local bufnr = tonumber(vim.fn.trim(vim.fn.matchstr(first_line, [[\v\s*\d+]])))
-    if (bufnr) then
-        vim.cmd("buffer " .. bufnr)
-    else
-        vim.cmd("term")
-    end
-    vim.cmd("normal! i")
+vim.keymap.set({ "n", "i" }, "<C-p>", function()
+  vim.cmd("redir @a | silent ls | redir END")
+  local output = vim.fn.system("grep term", vim.fn.getreg("a"))
+  local first_line = vim.split(output, "\n")[1]
+  local bufnr = tonumber(vim.fn.trim(vim.fn.matchstr(first_line, [[\v\s*\d+]])))
+  if bufnr then
+    vim.cmd("buffer " .. bufnr)
+  else
+    vim.cmd("term")
+  end
+  vim.cmd("normal! i")
 end, { noremap = true, silent = true })
 
 -------------------------------------------------------------------------------
 --------------------------------- TELESCOPE -----------------------------------
 -------------------------------------------------------------------------------
-local builtin = require('telescope.builtin')
-vim.keymap.set({'n', 'i', 't'}, '<M-f>', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<leader>fg', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set({'n', 'i', 't'}, '<M-a>', builtin.buffers, { desc = 'Telescope buffers' })
-vim.keymap.set('n', '<leader>fh', builtin.help_tags, { desc = 'Telescope help tags' })
+local builtin = require("telescope.builtin")
+vim.keymap.set({ "n", "i", "t" }, "<M-f>", builtin.find_files, { desc = "Telescope find files" })
+vim.keymap.set({ "n", "i", "t" }, "<M-a>", builtin.buffers, { desc = "Telescope buffers" })
+-- vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Telescope live grep" })
+-- vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Telescope help tags" })
 
-local action_state = require('telescope.actions.state')
-local actions = require('telescope.actions')
-require('telescope').setup{
+local action_state = require("telescope.actions.state")
+local actions = require("telescope.actions")
+require("telescope").setup({
   pickers = {
     buffers = {
       ignore_current_buffer = true,
+      sort_mru = true,
     },
   },
   defaults = {
     mappings = {
       i = {
-         ["<CR>"] = function(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            local filepath = selection.path
+        ["<CR>"] = function(prompt_bufnr)
+          local selection = action_state.get_selected_entry()
+          local filepath = selection.path
 
-              if filepath and filepath:match("%.pdf$") then
-                vim.fn.jobstart({"open", filepath})
-                actions.close(prompt_bufnr)
-              else
-                actions.select_default(prompt_bufnr)
-              end
-             end,
+          if filepath and filepath:match("%.pdf$") then
+            vim.fn.jobstart({ "open", filepath })
+            actions.close(prompt_bufnr)
+          else
+            actions.select_default(prompt_bufnr)
+          end
+        end,
       },
       n = {
-         ["<CR>"] = function(prompt_bufnr)
-            local selection = action_state.get_selected_entry()
-            local filepath = selection.path
+        ["<CR>"] = function(prompt_bufnr)
+          local selection = action_state.get_selected_entry()
+          local filepath = selection.path
 
-              if filepath and filepath:match("%.pdf$") then
-                vim.fn.jobstart({"open", filepath})
-                actions.close(prompt_bufnr)
-              else
-                actions.select_default(prompt_bufnr)
-              end
-         end,
-         ["<Del>"] = actions.delete_buffer,
-         ["<BS>"] = actions.delete_buffer,
+          if filepath and filepath:match("%.pdf$") then
+            vim.fn.jobstart({ "open", filepath })
+            actions.close(prompt_bufnr)
+          else
+            actions.select_default(prompt_bufnr)
+          end
+        end,
+        ["<Del>"] = actions.delete_buffer,
+        ["<BS>"] = actions.delete_buffer,
       },
     },
   },
-}
+})
+
+-------------------------------------------------------------------------------
+----------------------------------- PYTHON ------------------------------------
+-------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
 ---------------------------------- .txt/.md -----------------------------------
@@ -220,21 +242,21 @@ nvim-lspconfig package + clangd installation required for this. See :help lsp
 Formatting configured in ~/.clang-format. Run `clang-format -dump-config` to
 see settings. This automatically overrides `gq` for formatting.
 --]]
-local lspconfig = require('lspconfig')
+local lspconfig = require("lspconfig")
 lspconfig.clangd.setup({})
-vim.api.nvim_set_keymap('n', '<leader>j', '<Cmd>lua vim.lsp.buf.code_action()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<leader>j", "<Cmd>lua vim.lsp.buf.code_action()<CR>", { noremap = true, silent = true })
 
 -- Configure Pyright for Python
 -- installed pyright via homebrew
-lspconfig.pyright.setup {
+lspconfig.pyright.setup({
   on_attach = function(client, bufnr)
     -- Keybindings for LSP features
     local opts = { noremap = true, silent = true, buffer = bufnr }
     -- local keymap = vim.api.nvim_set_keymap
 
     -- LSP key mappings
-    keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-    keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
+    keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
+    keymap("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
     -- keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
     -- keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
     -- keymap('n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
@@ -256,6 +278,4 @@ lspconfig.pyright.setup {
       },
     },
   },
-}
-
-
+})
