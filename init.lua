@@ -1,3 +1,4 @@
+-- setup c lsp
 -- todo: don't close help buffer when leaving
 -- todo: oil --> term is broken
 -- todo: make help and oil full screen and not disrupt splits when you return
@@ -74,6 +75,9 @@ vim.opt.splitright = true
 vim.opt.splitbelow = true
 vim.opt.cursorline = true
 vim.opt.scrolloff = 10
+vim.opt_local.lbr = true
+vim.opt_local.breakindent = true
+vim.opt_local.showbreak = "↪"
 
 -------------------------------------------------------------------------------
 ------------------------------------ THEME ------------------------------------
