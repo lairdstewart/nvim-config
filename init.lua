@@ -1,13 +1,22 @@
--- setup c lsp
--- todo: don't close help buffer when leaving
--- todo: oil --> term is broken
--- todo: make help and oil full screen and not disrupt splits when you return
--- todo: when opening terminal from anywhere go into insert mode automatically
--- todo: oil can't delete hidden files?
--- todo: store last_normal_buffer
--- todo: run python file on command
+-- make replace <leader>r start from current and go down
+-- alt+s equivalent (see and navigate method declarations)
+-- map gj (holding down g already) to map to g+j
+-- javadoc coloring doesn't work with spaces.
+-- tab doesn't work !!!
+-- try out https://github.com/SirVer/ultisnips
+-- make :w create directories/folders as necessary
+-- include git +- symbols in left column
+-- don't close help buffer when leaving
+-- oil --> term is broken
+-- make help and oil full screen and not disrupt splits when you return
+-- when opening terminal from anywhere go into insert mode automatically
+-- oil can't delete hidden files?
+-- store last_normal_buffer
+-- can't open links with gx from markdown. think b.c. I'm not using netrw
 
--- mapped <C-n> to <M-;> in iTerm2
+-- iTerm2 mappings:
+-- cmd-n to <M-;>
+-- cmd-shift-n to <M-q>
 
 -- must be loaded before lazy.vim
 vim.g.mapleader = " "
@@ -26,6 +35,81 @@ local onBufLeave = function()
     print("save buffer num")
   end
 end
+
+-- OIL
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "oil",
+  callback = function()
+    vim.keymap.set("n", "<CR>", function()
+      local oil = require("oil")
+      local entry = oil.get_cursor_entry()
+      local name = entry and entry.name or ""
+
+      if name:match("%.png$") or name:match("%.pdf$") or name:match("%.jpg$") then
+          print("hello2")
+        require("oil.actions").open_external.callback()
+      else
+        require("oil.actions").select.callback()
+      end
+    end, { buffer = true })
+  end,
+})
+
+-- open links without netrw
+-- vim.keymap.set("n", "gx", function()
+--   local url = vim.fn.expand("<cWORD>")
+--   vim.fn.jobstart({ "open", url }, { detach = true })
+-- end, { silent = true })
+-- open links with netrw (attempt 2)
+vim.g.netrw_nogx = 1
+vim.keymap.set('n', 'gx', function()
+  local url = vim.fn.expand('<cfile>')
+  if url ~= '' then
+    vim.fn.jobstart({'open', url}, {detach = true})
+  end
+end, {desc = 'Open URL under cursor (macOS)'})
+
+--local function clever_enter()
+--  local col = vim.fn.col('.') - 1
+--  local line = vim.fn.getline('.')
+--  if line:sub(1, col):match("^%s*$") then
+--    return vim.api.nvim_replace_termcodes("<CR>", true, true, true)
+--  else
+--    return vim.api.nvim_replace_termcodes("<C-Y>", true, true, true)
+--  end
+--end
+--
+--vim.keymap.set("i", "<CR>", clever_enter, { expr = true, noremap = true })
+
+
+
+-------------------------------------------------------------------------------
+------------------------------------ JDTLS -------------------------------------
+-------------------------------------------------------------------------------
+vim.api.nvim_create_autocmd("FileType", {
+    pattern = "java",
+    callback = function()
+        require("config.ftplugin.java")
+    end,
+})
+
+-------------------------------------------------------------------------------
+-------------------------------- DIAGNOSTICS ----------------------------------
+-------------------------------------------------------------------------------
+vim.diagnostic.config({
+    signs = {
+        text = {
+            [vim.diagnostic.severity.ERROR] = '',
+            [vim.diagnostic.severity.WARN] = '',
+            [vim.diagnostic.severity.HINT] = '',
+            [vim.diagnostic.severity.INFO] = '',
+        },
+    }
+})
+
+-- abbreviations 
+vim.cmd("iabbrev sout System.out.println();")
+vim.cmd("iabbrev souf System.out.printf();")
 
 -------------------------------------------------------------------------------
 ------------------------------------ HELP -------------------------------------
@@ -55,14 +139,15 @@ require("oil").setup({
   keymaps = {
     ["<ESC>"] = { "actions.close", mode = "n" },
     ["<M-j>"] = { "actions.close", mode = "n" },
+    -- todo open pdfs and pngs
   },
 })
 
-vim.keymap.set({ "n", "i", "t" }, "<M-j>", "<C-\\><C-n>:Oil .<CR>")
+vim.keymap.set("n", "<leader>j", "<C-\\><C-n>:Oil .<CR>")
 vim.keymap.set("n", "-", ":Oil<CR>")
 
 -------------------------------------------------------------------------------
------------------------------------- MISC -------------------------------------
+------------------------------------ OPTS -------------------------------------
 -------------------------------------------------------------------------------
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
@@ -75,24 +160,40 @@ vim.opt.splitright = true
 vim.opt.splitbelow = true
 vim.opt.cursorline = true
 vim.opt.scrolloff = 10
-vim.opt_local.lbr = true
-vim.opt_local.breakindent = true
-vim.opt_local.showbreak = "↪"
+vim.opt.lbr = true
+vim.opt.breakindent = true
+vim.opt.showbreak = "↪"
+vim.opt.formatoptions = "jcrql"
+-- vim.opt.colorcolumn = "80" -- todo turn off in OIL
 
 -------------------------------------------------------------------------------
 ------------------------------------ THEME ------------------------------------
+-- vim.cmd("colorscheme material")
 -------------------------------------------------------------------------------
-vim.g.material_style = "darker"
-vim.cmd("colorscheme material")
+-- vim.g.material_style = "darker"
+vim.cmd("colorscheme tokyonight")
+
+-- vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "StatusLine", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "StatusLineNC", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
+-- vim.api.nvim_set_hl(0, "FoldColumn", { bg = "none" })
 
 -------------------------------------------------------------------------------
------------------------------------- MISC -------------------------------------
+---------------------------------- KEYMAPS ------------------------------------
 -------------------------------------------------------------------------------
---vim.api.nvim_set_keymap('n', '<Tab>', ':bnext<CR>', { noremap = true })
---vim.api.nvim_set_keymap('n', '<S-Tab>', ':bprev<CR>', { noremap = true })
+vim.keymap.set("n", "<leader>t", ":ClangFormat<CR>")
+vim.keymap.set("n", "<leader>c", ":CompileAndRun<CR>")
+-- Disable clipboard copying when pasting in visual mode
+vim.api.nvim_set_keymap('v', 'p', '"_dP', { noremap = true, silent = true })
+vim.keymap.set( "n", "<leader>l", "<C-i>")
+vim.keymap.set("n", "<leader>h", "<C-o>")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("n", "<leader>r", ":%s/\\<<C-r><C-w>\\>//gc<Left><Left><Left>")
+-- vim.keymap.set("n", "<leader>r", ":%s/")
 vim.keymap.set("n", "<C-u>", "<C-u>zz")
 vim.keymap.set("n", "<C-d>", "<C-d>zz")
 vim.keymap.set("n", "n", "nzz")
@@ -104,6 +205,27 @@ vim.keymap.set("n", "<leader>p", '"+p')
 vim.keymap.set("v", "<leader>p", '"+p')
 vim.keymap.set("n", "<leader>d", '"_d')
 vim.keymap.set("v", "<leader>d", '"_d')
+vim.keymap.set({"n", "i", "v"}, "<C-/>", ":Commentary<CR>", {silent=true})
+-- vim.keymap.set("n", "<leader>e", vim.diagnostic.goto_next)
+
+-------------------------------------------------------------------------------
+-------------------------------- USER COMMANDS --------------------------------
+-------------------------------------------------------------------------------
+vim.api.nvim_create_user_command('CompileAndRun', function()
+  local filetype = vim.bo.filetype
+  local filename = vim.fn.expand('%')
+
+  if filetype == 'c' then
+    local output_name = vim.fn.expand('%:p:h') .. '/' .. vim.fn.expand('%:t:r')
+    vim.cmd('w')
+    vim.cmd('terminal gcc "' .. filename .. '" -o "' .. output_name .. '" && "' .. output_name .. '"')
+  elseif filetype == 'python' then
+    vim.cmd('w')
+    vim.cmd('terminal python3 "' .. filename .. '"')
+  else
+    print("File type not recognized!")
+  end
+end, { desc = "Compile and run current file" })
 
 -------------------------------------------------------------------------------
 ------------------------------------ TERM -------------------------------------
@@ -119,12 +241,10 @@ vim.api.nvim_create_autocmd("TermOpen", {
   end,
 })
 
--- iterm: command+; --> C-p
-vim.keymap.set("t", "<C-p>", "<C-\\><C-n>:b#<CR>")
+vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
 vim.keymap.set("t", "<C-w>", "<C-\\><C-n><C-w>")
-
--- vim.keymap.set("n", "<M-;>", function() -- windows
-vim.keymap.set({ "n", "i" }, "<C-p>", function()
+-- TODO not working anymore
+vim.keymap.set("n", "<leader>;", function()
   vim.cmd("redir @a | silent ls | redir END")
   local output = vim.fn.system("grep term", vim.fn.getreg("a"))
   local first_line = vim.split(output, "\n")[1]
@@ -141,8 +261,13 @@ end, { noremap = true, silent = true })
 --------------------------------- TELESCOPE -----------------------------------
 -------------------------------------------------------------------------------
 local builtin = require("telescope.builtin")
-vim.keymap.set({ "n", "i", "t" }, "<M-f>", builtin.find_files, { desc = "Telescope find files" })
-vim.keymap.set({ "n", "i", "t" }, "<M-a>", builtin.buffers, { desc = "Telescope buffers" })
+vim.keymap.set("n", '<leader>f', builtin.find_files, { desc = "Telescope find files" })
+vim.keymap.set("n", "<leader>a", builtin.buffers, { desc = "Telescope buffers" })
+-- vim.keymap.set('n', '<leader>f', builtin.lsp_references, {desc = "Telescope find references"});
+vim.keymap.set("n", "<leader>e", function()
+  builtin.diagnostics({ bufnr = 0 })
+end, { desc = "Show diagnostics for current buffer" })
+
 -- vim.keymap.set("n", "<leader>fg", builtin.live_grep, { desc = "Telescope live grep" })
 -- vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Telescope help tags" })
 
@@ -156,6 +281,12 @@ require("telescope").setup({
     },
   },
   defaults = {
+    -- layout_strategy = 'vertical',
+    layout_config = {
+      height = 0.99,
+      width = 0.99,
+      -- prompt_position = "top"
+    },
     mappings = {
       i = {
         ["<CR>"] = function(prompt_bufnr)
@@ -190,7 +321,7 @@ require("telescope").setup({
 })
 
 -------------------------------------------------------------------------------
------------------------------------ PYTHON ------------------------------------
+------------------------------------ .py -------------------------------------
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -220,66 +351,6 @@ require("telescope").setup({
 -- })
 
 -------------------------------------------------------------------------------
--------------------------------------- .c --------------------------------------
+------------------------------------- .c --------------------------------------
 -------------------------------------------------------------------------------
--- compile and run a c file with leader+enter
--- vim.api.nvim_set_keymap('n', '<leader>c', [[:w<CR>:!gcc % -o %:r<CR>]], { noremap = true, silent = true })
--- vim.api.nvim_set_keymap('n', '<leader>r', [[:w<CR>:!gcc % -o %:r && ./%:r<CR>]], { noremap = true, silent = true })
--- doesn't work but ok.
--- vim.api.nvim_set_keymap('n', '<leader>t', [[:w<CR>:terminal gcc % -o %:r && ./%:r<CR>]], { noremap = true, silent = true })
-
--- manually format, idk if this is the best way to do it.
--- vim.api.nvim_create_autocmd("BufWritePre", {
---   pattern = "*.c",
---   callback = function()
---     local pos = vim.api.nvim_win_get_cursor(0)
---     vim.cmd("normal! gggqG")
---     vim.api.nvim_win_set_cursor(0, pos)
---     vim.cmd("normal! zz")
---   end,
---   group = vim.api.nvim_create_augroup("format_on_save", { clear = true }),
--- })
-
---[[
-LSP
-nvim-lspconfig package + clangd installation required for this. See :help lsp
-Formatting configured in ~/.clang-format. Run `clang-format -dump-config` to
-see settings. This automatically overrides `gq` for formatting.
---]]
-local lspconfig = require("lspconfig")
-lspconfig.clangd.setup({})
-vim.api.nvim_set_keymap("n", "<leader>j", "<Cmd>lua vim.lsp.buf.code_action()<CR>", { noremap = true, silent = true })
-
--- Configure Pyright for Python
--- installed pyright via homebrew
-lspconfig.pyright.setup({
-  on_attach = function(client, bufnr)
-    -- Keybindings for LSP features
-    local opts = { noremap = true, silent = true, buffer = bufnr }
-    -- local keymap = vim.api.nvim_set_keymap
-
-    -- LSP key mappings
-    keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", opts)
-    keymap("n", "K", "<cmd>lua vim.lsp.buf.hover()<CR>", opts)
-    -- keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-    -- keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-    -- keymap('n', '<leader>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-    -- keymap('n', '<leader>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-
-    -- Format on save
-    -- vim.api.nvim_create_autocmd("BufWritePre", {
-    --   buffer = bufnr,
-    --   callback = function()
-    --     vim.lsp.buf.format({ async = false })
-    --   end,
-    -- })
-  end,
-
-  settings = {
-    python = {
-      analysis = {
-        typeCheckingMode = "basic", -- Change to "strict" for stricter type checking
-      },
-    },
-  },
-})
+-- compile and run
